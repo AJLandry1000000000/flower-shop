@@ -4,7 +4,7 @@ import { calculateBundle } from '../services/bundleCalculator.js';
 export const router = Router();
 
 router.post('/', async (req, res) => {
-    try {
+    // try {
         const orders = req.body;
         let results = []
         for (let order of orders) {
@@ -17,10 +17,10 @@ router.post('/', async (req, res) => {
             message: 'Order created successfully',
             results: results
         });
-    } catch (error) {
-        res.status(500).send({
-            message: `An error occurred while creating the order : ${error.message}`
-        });
-    }
+    // } catch (error) {
+    //     res.status(500).send({
+    //         message: `An error occurred while creating the order : ${error.message}`
+    //     });
+    // }
 
 });

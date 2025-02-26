@@ -6,5 +6,43 @@ const PRODUCTS = {
 };
 
 export function calculateBundle(productCode, quantity) {
+    let product = PRODUCTS[productCode];
 
+    if (!product) {
+        throw new Error("Product not found");
+    }
+
+    product.bundles.sort((a, b) => b - a);
+
+    console.log(`product bundles: ${product.bundles}`);
+
+    return recursiveBundleCalculator(product, quantity);
+}
+
+function recursiveBundleCalculator(product, quantity) {
+    if (quantity === 0) {
+        let result = {
+            name: product.name,
+        };
+
+        for (let bundleQuantity of product.bundles) {
+            result[bundleQuantity] = 0;
+        }
+
+        return result;
+    }
+
+    for (let bundleQuantity of product.bundles) {
+        if (bundleQuantity <= quantity) {
+            const recursiveResults = recursiveBundleCalculator(product, quantity - bundleQuantity);
+
+            if (recursiveResults) {
+                recursiveResults[bundleQuantity] += 1;
+                
+                return recursiveResults;
+            }
+        }
+    }
+
+    return null;
 }

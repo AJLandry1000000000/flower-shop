@@ -8,3 +8,5 @@ Assumption: There needs to be an exact solution. We cannot over charge them by g
 Build a recursive solution which starts with the biggest bundles and backtracks when a solution doesn't work, to test the next smallest bundle (one up the recursion chain).
 
 CONSIDER EDGE CASES!
+
+TEST WITH INVALID COMBINATIONS!
