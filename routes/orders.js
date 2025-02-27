@@ -1,25 +1,31 @@
 import Router from 'express';
-import { calculateBundle } from '../services/bundleCalculator.js';
+
+import RequestHandler from '../classes/RequestHandler.js';
+import OrderCalculator from '../classes/OrderCalculator.js';
 
 export const router = Router();
 
 router.post('/', async (req, res) => {
     // try {
-        const orders = req.body;
+        let requestHandler = new RequestHandler(req);
+
+        const orders = await requestHandler.getOrders(req);
+
         let results = []
+
         for (let order of orders) {
-            const result = calculateBundle(order.code, order.quantity);
-            results.push({ product: order.code, ...result });
-            console.log(result);
-            console.log(order);
+            const result = await OrderCalculator.calculateBundle(order);
+            results.push(result);
         }
+
         res.status(200).send({
-            message: 'Order created successfully',
-            results: results
+            message: 'Order was successfully created!',
+            results: await requestHandler.formatOrders(results)
         });
+
     // } catch (error) {
     //     res.status(500).send({
-    //         message: `An error occurred while creating the order : ${error.message}`
+    //         message: `An error occurred while creating the order! : ${error.message}`
     //     });
     // }
 
