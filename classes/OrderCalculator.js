@@ -1,4 +1,4 @@
-import ProductModel from "./ProductModel.js";
+import ProductModel from "./database/ProductModel.js";
 
 export default class OrderCalculator {
     static async calculateBundle(order) {
@@ -14,7 +14,7 @@ export default class OrderCalculator {
     
         product.bundles.sort((a, b) => b - a);
     
-        console.log(`product bundles: ${product.bundles}`);
+        // console.log(`product bundles: ${product.bundles}`);
     
         let bundles = this.recursiveBundleCalculator(product, quantity);
 
@@ -77,7 +77,7 @@ export default class OrderCalculator {
                     let recursiveResults = this.recursiveBundleCalculator(product, quantity - (bundleQuantity * mostBundles));
 
                     if (recursiveResults) {      
-                        console.log(`recurse!`)          
+                        // console.log(`recurse!`)          
                         recursiveResults[bundleQuantity] += mostBundles;
 
                         recursiveResults.total_cost += product.prices[bundleQuantity] * mostBundles;

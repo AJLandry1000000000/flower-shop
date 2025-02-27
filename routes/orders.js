@@ -6,7 +6,7 @@ import OrderCalculator from '../classes/OrderCalculator.js';
 export const router = Router();
 
 router.post('/', async (req, res) => {
-    // try {
+    try {
         let requestHandler = new RequestHandler(req);
 
         const orders = await requestHandler.getOrders(req);
@@ -18,15 +18,14 @@ router.post('/', async (req, res) => {
             results.push(result);
         }
 
+        const formatedResults = await requestHandler.formatOrders(results)
         res.status(200).send({
             message: 'Order was successfully created!',
-            results: await requestHandler.formatOrders(results)
+            results: formatedResults
         });
-
-    // } catch (error) {
-    //     res.status(500).send({
-    //         message: `An error occurred while creating the order! : ${error.message}`
-    //     });
-    // }
-
+    } catch (error) {
+        res.status(500).send({
+            message: `An error occurred while creating the order! : ${error.message}`
+        });
+    }
 });

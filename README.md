@@ -15,7 +15,13 @@ Change the package.json file to not use nodemon?
 
 
 
-Commands:
+Make sure to add the migration and seed stuff to the setup
+
+
+
+
+
+____Commands____
 sudo service postgresql start
 
 CREATE A USER...

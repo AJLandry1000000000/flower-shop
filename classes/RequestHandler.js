@@ -1,4 +1,4 @@
-import ProductModel from "./ProductModel.js";
+import ProductModel from "./database/ProductModel.js";
 
 export default class RequestHandler {
 
@@ -58,7 +58,7 @@ export default class RequestHandler {
                 continue;
             }
 
-            orderString += `${orderSize} x ${bundleQuantity} $${product.prices[bundleQuantity] * orderSize}, `;
+            orderString += `${orderSize} x ${bundleQuantity} $${(product.prices[bundleQuantity] * orderSize).toFixed(2)}, `;
         }
 
         // Remove the trailing comma.
@@ -66,7 +66,7 @@ export default class RequestHandler {
             orderString = orderString.slice(0, -2);
         }
 
-        console.log(`orderString = ${orderString}`);
+        // console.log(`orderString = ${orderString}`);
 
         return orderString;
     }
