@@ -1,3 +1,4 @@
+import res from "express/lib/response.js";
 import ProductModel from "./database/ProductModel.js";
 
 export default class OrderCalculator {
@@ -16,7 +17,9 @@ export default class OrderCalculator {
     
         // console.log(`product bundles: ${product.bundles}`);
     
-        let bundles = this.recursiveBundleCalculator(product, quantity);
+        // let bundles = this.recursiveBundleCalculator(product, quantity);
+
+        let bundles = this.dynamicBundleCalculator(product, quantity);
 
         if (!bundles) {
             return {
@@ -31,6 +34,72 @@ export default class OrderCalculator {
         bundles.requested_quantity = quantity;
 
         return bundles;
+    }
+
+    static dynamicBundleCalculator(product, quantity) {
+        let infinity_bundle = this.emptyBundle(product)
+        infinity_bundle.total_bundle_count = 1000;
+        let dp = new Array(quantity + 1).fill({ ...infinity_bundle });
+        // console.log(`dp: ${JSON.stringify(dp)}`);
+        // console.log(`product: ${JSON.stringify(product)}`);
+        dp[0] = this.emptyBundle(product);
+
+        for (let i = 1; i <= quantity; i++) {
+            for (let bundle_quantity of product.bundles) {
+                if (bundle_quantity <= i) {
+                    // let new_total_bundles = Math.min(dp[i].total_bundle_count, dp[i - bundle_quantity].total_bundle_count + 1);
+                    let current_bundle = dp[i];
+                    let previous_bundle = dp[i - bundle_quantity]
+                    if (previous_bundle.total_bundle_count + 1 < current_bundle.total_bundle_count) {
+                        // console.log(`i: ${i}, bundle_quantity: ${bundle_quantity}, previous_bundle: ${JSON.stringify(previous_bundle)}`);
+                        dp[i] = { bundle_quantity, total_bundle_count: previous_bundle.total_bundle_count + 1 };
+                        // dp[i].bundle_quantity = bundle_quantity;
+                        // dp[i].total_bundle_count = previous_bundle.total_bundle_count + 1;
+                    }
+                }
+            }
+        }
+
+        if (dp[quantity].total_bundle_count === Infinity) {
+            return null;
+        }
+
+        console.log(`dp: ${JSON.stringify(dp)}`);
+
+        let result = {
+            name: product.name,
+            code: product.code,
+            requested_quantity: quantity,
+            total_cost: 0,
+        };
+
+        let current_quantity = quantity;
+        while (current_quantity > 0) {
+            let current_bundle = dp[current_quantity];
+            
+            if (!result.hasOwnProperty(current_bundle.bundle_quantity)) {
+                result[current_bundle.bundle_quantity] = 0;
+            }
+            
+            result[current_bundle.bundle_quantity] += 1;
+            
+            result.total_cost += product.prices[current_bundle.bundle_quantity];
+            
+            current_quantity -= current_bundle.bundle_quantity
+        }
+
+        // console.log(`result: ${JSON.stringify(result)}`);
+
+        return result;
+    }
+
+    static emptyBundle(product) {
+        let emptyBundle = {
+            bundle_quantity: 0,
+            total_bundle_count: 0,
+        };
+        
+        return emptyBundle;
     }
     
     /**

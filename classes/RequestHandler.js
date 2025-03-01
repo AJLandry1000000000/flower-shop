@@ -54,7 +54,7 @@ export default class RequestHandler {
         for (const bundleQuantity of product.bundles) {
             let orderSize = order[bundleQuantity];
             
-            if (orderSize === 0) {
+            if (!orderSize || orderSize === 0) {
                 continue;
             }
 
