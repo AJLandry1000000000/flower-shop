@@ -169,7 +169,7 @@ Memoization is one of the two main ways of developing DP algorithms (the other b
 - Add more comprehensive error handling.
 - Optimize the dynamic programming algorithm further. e.g. when the bundles remain the same, so too will the DP array for every index. So we could improve request time by saving the DP array information in a table, and recalculating it up to some large number, N, whenever a new bundle was added for a flower. We could then just look up the bundle configuration for a request, instead of recalculating it every time. 
 - Implement caching for frequently requested products.
-- In a real production enviroment we would save our enviroment variables in some cloud service instead of a .env file.
+- In a real production environment we would save our environment variables in some cloud service instead of a .env file.
 - Breaking our data into two tables might be a good idea. This isn't required, but would make data analytics and data safety (i.e. ensuring there are certain [quantity, price] pairs) easier. Those two tables could be:
     - One for products, 'product_table' containing ['name', 'code']
     - One for bundles, 'bundle_table' containing ['code', 'quantity', 'price']  
