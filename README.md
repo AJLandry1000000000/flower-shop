@@ -132,13 +132,11 @@ To create an order send a POST request to `http://localhost:9000/api/v1/orders` 
 
 ## Design decisions
 ### Class breakdown 
-- `Model`: This class is the base class for database operations. Technically our application doesn't need this, but in assuming our application grew over time, more database tables would be made, and hence would need to inherit the basic operations from this `Model` class.
+- `Model`: This class is the base class for database operations. Technically our application doesn't need this, but assuming our application will grow over time, more database tables would be made, and hence would need to inherit the basic operations from this `Model` class.
 - `ProductModel`: This class handles database operations for products. It inherits from the `Model` class.
 - `RequestHandler`: This class processes incoming requests, validates the payload, and formats our results data to send back to the requester.
 - `OrderCalculator`: Calculates the optimal bundle breakdown for orders.
 
-### Algorithm explanation
-What is my algorithms time complexity and space complexity?
 ### Algorithm explanation
 The algorithm uses Dynamic Programming (DP) to find the minimal number of bundles for each order.  
 This solution uses an array where each index, i, of the array represents the minimal bundles for the product to fill an order for i flowers. It slowly builds up to the quantity requested in the order by considering how a new bundle could be added to an existing set of bundles. See `dynamicBundleCalculator()` in `OrderCalculator.js` for the complete logic.  
