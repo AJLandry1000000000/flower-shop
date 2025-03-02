@@ -1,3 +1,11 @@
+# The Flower Shop 
+
+## Table of Contents
+- [Task description](#task-description)
+- [Installation, configuration, and running the application](#installation-configuration-and-running-the-application)
+- [Design decisions](#design-decisions)
+- [Further improvements](#further-improvements)
+- [Tests](#tests)
 
 
 ## Task description
@@ -139,16 +147,16 @@ To create an order send a POST request to `http://localhost:9000/api/v1/orders` 
 
 ### Algorithm explanation
 The algorithm uses Dynamic Programming (DP) to find the minimal number of bundles for each order.  
-This solution uses an array where each index, i, of the array represents the minimal bundles for the product to fill an order for i flowers. It slowly builds up to the quantity requested in the order by considering how a new bundle could be added to an existing set of bundles. See `dynamicBundleCalculator()` in `OrderCalculator.js` for the complete logic.  
+This solution uses an array where each index, i, of the array represents the minimal bundles of the product to fill an order for i flowers. It slowly builds up to the quantity requested in the order by considering how a new bundle could be added to an existing set of minimised bundles. See `dynamicBundleCalculator()` in `OrderCalculator.js` for the complete logic.  
   
 This algorithms time complexity is O(n*m) where n is the number of products and m is the quantity ordered. The space complexity is O(m).  
 
 **Solution context**:  
-Originally I wrote my algorithm as a recursive backtracking solution (See `recursiveBundleCalculator()` in `OrderCalculator.js` for the complete logic). This solution would find every bundle combination, starting with the combinations with largest bundle quantity solutions (and therefore the minimum bundle size), and return the first valid bundle combination it found.  
-For each failed recursion (i.e. an invalid bundle combination), it would backtrack to the previous recursion and try either reducing the amound of the current bundle quantity (i.e. 6 sets of quantity 9 instead of 7 sets of quantity 9), or reducing the bundle quantity (i.e. try bundle quantity 3 instead quantity 9).  
-This solution did work, and would always find a valid solution if there was one. However it had the following properties which made it sub-optimal for a production environment:
-- The algorithm's time complexity grew exponentially with the order quantity and the number of bundle variations.
-- Since the algorithm finds every combination, it could spend time recalculating potential solutions with the same bundles. e.g. if we have bundles of 7 and 6, and an order for 17, there is no combination that would satisfy this order. But my backtracking solution would test the combinations of (7, 6), then it would calculation the combinations of (6, 7) <- this is sub-optimal!  
+Originally I wrote my algorithm as a recursive backtracking solution (See `recursiveBundleCalculator()` in `OrderCalculator.js` for the complete logic). This solution would find every bundle combination, starting with the largest bundle size combinations first, working down to the smallest bundle size, and return the first valid bundle combination it found (and therefore the minimum bundles).  
+For each failed recursion (i.e. an invalid bundle combination), it would backtrack to the previous recursion and try either reducing the amount of the current bundle quantity (i.e. 6 sets of quantity 9 instead of 7 sets of quantity 9), or reducing the bundle quantity (i.e. try bundle quantity 3 instead quantity 9).  
+This solution does work, and would always find a valid solution if there was one. However it had the following properties which made it sub-optimal for a production environment:
+- The algorithm's time complexity grew exponentially with the order quantity and the number of bundle offered.
+- Since the algorithm finds every combination, it could spend time recalculating potential solutions with the same bundles in different orders. e.g. if we have bundles of 7 and 6, and an order for 17, there is no combination that would satisfy this order. But my backtracking solution would test the combinations of (7, 6), then it would calculation the combinations of (6, 7) <- this is sub-optimal!  
 
 So, while my backtracking recursive solution did work, I tried to find a way to reduce the time complexity and use memoization (caching) to reduce recalculation of the same combinations.  
 Memoization is one of the two main ways of developing DP algorithms (the other being tabulation), additionally previous bundle solutions could be built upon for a larger solution. So a DP algorithm fit the description of what I was looking for. I built my final solution (and ended up using a tabulation method instead of memoization because it was simpler to read that memoization, which would have required recursion) using dynamic programming. 
@@ -162,9 +170,9 @@ Memoization is one of the two main ways of developing DP algorithms (the other b
 - Optimize the dynamic programming algorithm further. e.g. when the bundles remain the same, so too will the DP array for every index. So we could improve request time by saving the DP array information in a table, and recalculating it up to some large number, N, whenever a new bundle was added for a flower. We could then just look up the bundle configuration for a request, instead of recalculating it every time. 
 - Implement caching for frequently requested products.
 - In a real production enviroment we would save our enviroment variables in some cloud service instead of a .env file.
-- Breaking our data into two tables might be a good idea. This isn't required, but would make data analytics and data safety (i.e. ensuring there are certain (quantity, price) pairs) easier. Those two tables could be:
-    - One for products, 'product_table' containing ('name', 'code')
-    - One for bundles, 'bundle_table' containing ('code', 'quantity', 'price')  
+- Breaking our data into two tables might be a good idea. This isn't required, but would make data analytics and data safety (i.e. ensuring there are certain [quantity, price] pairs) easier. Those two tables could be:
+    - One for products, 'product_table' containing ['name', 'code']
+    - One for bundles, 'bundle_table' containing ['code', 'quantity', 'price']  
 - Add functionality to save a given order request. As our application grows we will likely need to record order requests for caching, analytics, and other functionality.
 - Add more tests to the testing suite.
 
