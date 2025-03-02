@@ -103,16 +103,6 @@ npm run setup
 
 You are now ready to start the application!
 
-mention the Postman ```POST http://localhost:9000/api/v1/orders``` input type looks like:  
-```
-[
-    { "quantity": 6, "code": "L09" },
-    { "quantity": 3, "code": "T58" },
-    { "quantity": 5, "code": "R12" },
-    { "quantity": 10, "code": "R12" }
-]
-```
-
 ### Running the application
 To start the application, use the following command:
 ```
