@@ -7,7 +7,7 @@ app.use(express.json());
 const baseUrl = '/api/v1';
 app.use(baseUrl + '/orders', router);
 
-describe('POST /orders', () => {
+describe('Testing for POST /orders', () => {
     it('Testing successful order creation using assignment examples', async () => {
         const response = await request(app)
             .post(`${baseUrl}/orders`)
@@ -67,6 +67,19 @@ describe('POST /orders', () => {
             "1005 R12 $1305.99 : 100 x 10 $1299.00, 1 x 5 $6.99",
             "89 T58 $168.81 : 9 x 9 $152.91, 1 x 5 $9.95, 1 x 3 $5.95",
             "12 L09 $34.90 : 1 x 9 $24.95, 1 x 3 $9.95"
+        ]);
+    });
+
+    it('Testing unsuccessful order creation because no bundle combination exists', async () => {
+        const response = await request(app)
+            .post(`${baseUrl}/orders`)
+            .send([
+                { "quantity": 7, "code": "R12" },
+            ]);
+
+        expect(response.status).toBe(200);
+        expect(response.body.results).toStrictEqual([
+            "7 R12 $0 : No bundle combination found for 7 R12"
         ]);
     });
 

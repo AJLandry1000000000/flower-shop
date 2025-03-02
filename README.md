@@ -177,6 +177,7 @@ Memoization is one of the two main ways of developing DP algorithms (the other b
 - Breaking our data into two tables might be a good idea. This isn't required, but would make data analytics and data safety (i.e. ensuring there are certain (quantity, price) pairs) easier. Those two tables could be:
     - One for products, 'product_table' containing ('name', 'code')
     - One for bundles, 'bundle_table' containing ('code', 'quantity', 'price')  
+- Add functionality to save a given order request. As our application grows we will likely need to record order requests for caching, analytics, and other functionality.
 - Add more tests to the testing suite.
 
 ## Tests
@@ -184,11 +185,15 @@ My tests cover the following scenarios:
 - Order creation: Successfully filling the assignments example order
 - Order creation: Successfully filling orders requiring only one type of bundle.
 - Order creation: Successfully filling orders requiring several types of bundles.
+- Order creation: Unsuccessfully filling an order because no bundle combinations exist.
 - Payload validation: Testing error handling for invalid flower codes.
 - Payload validation: Testing error handling for invalid order quantities.
 - Payload validation: Testing error handling for empty order payloads.
 - Payload validation: Testing error handling for an empty order list in the payload.
 - Payload validation: Testing error handling for an invalid type in the order payload.  
+- OrderCalculator unit test: Testing the correct bundle calculation for a simple valid order.
+- OrderCalculator unit test: Testing the correct bundle calculation for a more complex valid order.
+- OrderCalculator unit test: Testing the correct handling of an unfillable order because no bundle combinations exist.
 
 They ensure that the application behaves as expected under different conditions.
 Run the tests using the following command:  

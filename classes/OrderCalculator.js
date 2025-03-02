@@ -1,108 +1,164 @@
-import res from "express/lib/response.js";
 import ProductModel from "./database/ProductModel.js";
 
 export default class OrderCalculator {
+    /**
+     * Method to calculate the bundle for an order.
+     * 
+     * @param {*} order 
+     * @returns 
+     */
     static async calculateBundle(order) {
-        let quantity = order.quantity;
+        // Get the quantity from the order.
+        const quantity = order.quantity; 
+    
+        // Get the product code from the order.
+        const productCode = order.code; 
 
-        let productCode = order.code;
-
-        let product = await ProductModel.getProduct(productCode);
+        // Get the product data from the database. If the product doesn't exist, throw an error.
+        const product = await ProductModel.getProduct(productCode);
     
         if (!product) {
             throw new Error(`Product "${productCode}" not found!`);
         }
     
+        // Sort the bundles in descending order. 
+        // This is defensive code, because technically we have already sorted the bundles in the database on insertion (see the addProduct method in ProductModel).
         product.bundles.sort((a, b) => b - a);
     
-        // console.log(`product bundles: ${product.bundles}`);
-    
-        // let bundles = this.recursiveBundleCalculator(product, quantity);
-
+        // Optimal solution: Calculate the bundles using dynamic programming.
         let bundles = this.dynamicBundleCalculator(product, quantity);
+
+        // Alternative solution: Calculate the bundles using recursive backtracking.
+        // let bundles = this.recursiveBundleCalculator(product, quantity);
 
         if (!bundles) {
             return {
                 name: product.name,
                 code: product.code,
-                requested_quantity: quantity,
-                no_solution: `No bundle combination found for ${quantity} ${product.code}`,
-                total_cost: 0,
+                requestedQuantity: quantity,
+                noSolution: `No bundle combination found for ${quantity} ${product.code}`,
+                totalCost: 0,
             }
         }
 
-        bundles.requested_quantity = quantity;
+        bundles.requestedQuantity = quantity;
 
         return bundles;
     }
 
+    /**
+     * FINAL SOLUTION (dynamic programming)
+     * 
+     * This is the final solution used in the implementation.
+     * 
+     * It calculates the minimum number of bundles required for an order using dynamic programming.
+     * 
+     * It uses an array, 'dp', where each array index represents a quantity, and the value at that index is the minimum number 
+     * of bundles required to reach that quantity.
+     * 
+     * It sets its value by considering every bundle size, 'bundleQuantity', for each index, 'i'. 
+     * 
+     * It checks if the bundles are minimised at quantity 'i' if filled with 'bundleQuantity' by comparing the total bundles 
+     * required at 'i' with the total bundles required at 'i - bundleQuantity' + 1 (the +1 is for the addition of the current 'bundleQuantity). 
+     * 
+     * @param {*} product 
+     * @param {*} quantity 
+     * @returns 
+     */
     static dynamicBundleCalculator(product, quantity) {
-        let infinity_bundle = this.emptyBundle(product)
-        infinity_bundle.total_bundle_count = 1000;
-        let dp = new Array(quantity + 1).fill({ ...infinity_bundle });
-        // console.log(`dp: ${JSON.stringify(dp)}`);
-        // console.log(`product: ${JSON.stringify(product)}`);
+        let infinityBundle = this.emptyBundle(product)
+        infinityBundle.totalBundleCount = 1000;
+
+        let dp = new Array(quantity + 1).fill({ ...infinityBundle });
+
         dp[0] = this.emptyBundle(product);
 
         for (let i = 1; i <= quantity; i++) {
-            for (let bundle_quantity of product.bundles) {
-                if (bundle_quantity <= i) {
-                    // let new_total_bundles = Math.min(dp[i].total_bundle_count, dp[i - bundle_quantity].total_bundle_count + 1);
-                    let current_bundle = dp[i];
-                    let previous_bundle = dp[i - bundle_quantity]
-                    if (previous_bundle.total_bundle_count + 1 < current_bundle.total_bundle_count) {
-                        // console.log(`i: ${i}, bundle_quantity: ${bundle_quantity}, previous_bundle: ${JSON.stringify(previous_bundle)}`);
-                        dp[i] = { bundle_quantity, total_bundle_count: previous_bundle.total_bundle_count + 1 };
-                        // dp[i].bundle_quantity = bundle_quantity;
-                        // dp[i].total_bundle_count = previous_bundle.total_bundle_count + 1;
+            for (let bundleQuantity of product.bundles) {
+                if (bundleQuantity <= i) {
+                    let currentBundle = dp[i];
+
+                    let previousBundle = dp[i - bundleQuantity];
+
+                    if (previousBundle.totalBundleCount + 1 < currentBundle.totalBundleCount) {
+                        dp[i] = { bundleQuantity, totalBundleCount: previousBundle.totalBundleCount + 1 };
                     }
                 }
             }
         }
 
-        if (dp[quantity].total_bundle_count === Infinity) {
-            return null;
-        }
-
-        console.log(`dp: ${JSON.stringify(dp)}`);
-
-        let result = {
-            name: product.name,
-            code: product.code,
-            requested_quantity: quantity,
-            total_cost: 0,
-        };
-
-        let current_quantity = quantity;
-        while (current_quantity > 0) {
-            let current_bundle = dp[current_quantity];
-            
-            if (!result.hasOwnProperty(current_bundle.bundle_quantity)) {
-                result[current_bundle.bundle_quantity] = 0;
-            }
-            
-            result[current_bundle.bundle_quantity] += 1;
-            
-            result.total_cost += product.prices[current_bundle.bundle_quantity];
-            
-            current_quantity -= current_bundle.bundle_quantity
-        }
-
-        // console.log(`result: ${JSON.stringify(result)}`);
-
-        return result;
+        return this.buildResultsFromDynamicBundleCalculator(product, quantity, dp);
     }
 
-    static emptyBundle(product) {
+    /**
+     * Method to create an empty bundle object.
+     * This function to initialise the dp array in the dynamic programming solution.
+     * 
+     * @returns 
+     */
+    static emptyBundle() {
         let emptyBundle = {
-            bundle_quantity: 0,
-            total_bundle_count: 0,
+            bundleQuantity: 0,
+            totalBundleCount: 0,
         };
         
         return emptyBundle;
     }
+
+    /**
+     * Method to build the results from the dynamic bundle calculator.
+     * 
+     * @param {*} product 
+     * @param {*} quantity 
+     * @param {*} dp 
+     * @returns 
+     */
+    static buildResultsFromDynamicBundleCalculator(product, quantity, dp) {
+        if (dp[quantity].bundleQuantity == 0 || dp[quantity].totalBundleCount == Infinity) {
+            return null;
+        }
+
+        let result = {
+            name: product.name,
+            code: product.code,
+            requestedQuantity: quantity,
+            totalCost: 0,
+        };
+
+        let currentQuantity = quantity;
+        while (currentQuantity > 0) {
+            let currentBundle = dp[currentQuantity];
+            
+            if (!result.hasOwnProperty(currentBundle.bundleQuantity)) {
+                result[currentBundle.bundleQuantity] = 0;
+            }
+            
+            result[currentBundle.bundleQuantity] += 1;
+            
+            result.totalCost += product.prices[currentBundle.bundleQuantity];
+            
+            currentQuantity -= currentBundle.bundleQuantity
+        }
+
+        return result;
+    }
+
+
+
+
+
+
+
+
+
+
     
     /**
+     * ALTERNATIVE SOLUTION (recursive backtracking)
+     * 
+     * This is an alternative solution to the dynamic programming solution above. 
+     * It is less optimal so wasn't used in the final implementation, but it is included here for reference.
+     * 
      * The solution is to use a backtracking recursive function to calculate the minimum bundles for the order.
      * 
      * Where at every level of the recursion we use the product's largest bundle size that is less than or equal to the quantity. 
@@ -128,7 +184,7 @@ export default class OrderCalculator {
             let result = {
                 name: product.name,
                 code: product.code,
-                total_cost: 0,
+                totalCost: 0,
             };
     
             for (let bundleQuantity of product.bundles) {
@@ -146,10 +202,9 @@ export default class OrderCalculator {
                     let recursiveResults = this.recursiveBundleCalculator(product, quantity - (bundleQuantity * mostBundles));
 
                     if (recursiveResults) {      
-                        // console.log(`recurse!`)          
                         recursiveResults[bundleQuantity] += mostBundles;
 
-                        recursiveResults.total_cost += product.prices[bundleQuantity] * mostBundles;
+                        recursiveResults.totalCost += product.prices[bundleQuantity] * mostBundles;
 
                         return recursiveResults;
                     }

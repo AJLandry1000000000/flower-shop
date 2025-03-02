@@ -2,22 +2,36 @@ import ProductModel from "./database/ProductModel.js";
 
 export default class RequestHandler {
 
+    /**
+     * Constructor to initialize the request handling object.
+     * 
+     * @param {*} req 
+     */
     constructor(req) {
         this.request = req;
     }
 
+    /**
+     * Method to get and validate orders from the request body.
+     * 
+     * @returns {Array} orders
+     * @throws {Error} if the order array is invalid.
+     */
     async getOrders() {
-        let orders = this.request.body;
+        const orders = this.request.body;
 
+        // Check if order array is valid.
         if (!orders || !Array.isArray(orders) || orders.length === 0) {
             throw new Error("Invalid order request!");
         }
 
+        // Validate each order in the array.
         for (const order of orders) {
             if (!order.quantity || order.quantity <= 0 || !order.code) {
                 throw new Error("Invalid order format!");
             }
 
+            // Check if the product exists in the database. If not, throw an error.
             const product = await ProductModel.getProduct(order.code);
 
             if (!product) {
@@ -28,9 +42,16 @@ export default class RequestHandler {
         return orders;
     }
 
+    /**
+     * Method to format the orders for response.
+     * 
+     * @param {Array} orders 
+     * @returns {Array} formattedOrders
+     */
     async formatOrders(orders) {
         let formattedOrders = [];
 
+        // Format each order.
         for (let order of orders) {
             formattedOrders.push(await this.formatOrder(order));
         }
@@ -38,19 +59,30 @@ export default class RequestHandler {
         return formattedOrders;
     }
 
+    /**
+     * Method to format a single order.
+     * 
+     * @param {*} order 
+     * @returns 
+     */
     async formatOrder(order) {
-        if (!order.code || !('requested_quantity' in order) || !('total_cost' in order)) {
+        // Validate the order object.
+        if (!order.code || !('requestedQuantity' in order) || !('totalCost' in order)) {
             throw new Error("Invalid order");
         }
 
-        if (order.no_solution) {
-            return `${order.requested_quantity} ${order.code} $0 : ${order.no_solution}`;
+        // Handle case where no solution is found for the order.
+        if (order.noSolution) {
+            return `${order.requestedQuantity} ${order.code} $0 : ${order.noSolution}`;
         }
 
-        let orderString = `${order.requested_quantity} ${order.code} $${order.total_cost.toFixed(2)} : `;
+        // Initialize the order string with the requested quantity and total cost.
+        let orderString = `${order.requestedQuantity} ${order.code} $${order.totalCost.toFixed(2)} : `;
 
+        // Get the product details from the database.
         let product = await ProductModel.getProduct(order.code);
 
+        // Append each bundle string to the full order string.
         for (const bundleQuantity of product.bundles) {
             let orderSize = order[bundleQuantity];
             
@@ -65,8 +97,6 @@ export default class RequestHandler {
         if (orderString.endsWith(', ')) {
             orderString = orderString.slice(0, -2);
         }
-
-        // console.log(`orderString = ${orderString}`);
 
         return orderString;
     }
